@@ -1,5 +1,6 @@
 /// <reference path="./types/express/index.d.ts" />
 import process from 'process';
+import swaggerUi from 'swagger-ui-express';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -9,6 +10,7 @@ import cors from 'cors';
 import { connectDB } from './db';
 import { ERROR_MESSAGES, jsonErrorHandler } from './utils';
 import logger from './utils/logger';
+import swaggerSpec from './swagger/swagger';
 
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 dotenv.config({ path: envFile });
@@ -31,6 +33,7 @@ app.get('/', (_, res) => {
   res.send('API is working');
 });
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/todos', todoRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response) => {
