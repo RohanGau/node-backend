@@ -30,7 +30,11 @@ app.use(express.json());
 
 app.use(jsonErrorHandler);
 app.get('/', (_, res) => {
-  res.send('API is working');
+  res.send('Server is working');
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
