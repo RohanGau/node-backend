@@ -1,4 +1,4 @@
-import Joi, { ObjectSchema } from "joi";
+import Joi from "joi";
 
 const createTodoSchema = Joi.object({
     title: Joi.string().required().min(3).max(300).messages({
