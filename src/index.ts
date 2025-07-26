@@ -36,7 +36,8 @@ app.get('/', (_, res) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/todos', todoRoutes);
 
-app.use((err: any, req: express.Request, res: express.Response) => {
+// eslint-disable-next-line no-unused-vars
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.error({ err }, 'Global error :');
   const status = err.status || 500;
   res.status(status).json({
