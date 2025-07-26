@@ -1,47 +1,60 @@
 /// <reference path="./types/express/index.d.ts" />
-import dotenv from "dotenv";
-import express from "express";
-import todoRoutes from "./routes/todoRoutes";
-import cors from "cors";
-import { connectDB } from "./db";
-import { ErrorRequestHandler } from "./types/express/error";
+import process from 'process';
+import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import express from 'express';
+import todoRoutes from './routes/todoRoutes';
+import cors from 'cors';
+import { connectDB } from './db';
+import { ERROR_MESSAGES, jsonErrorHandler } from './utils';
+import logger from './utils/logger';
 
-dotenv.config();
+const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
+dotenv.config({ path: envFile });
 
 const app = express();
 const PORT = process.env.PORT || 5050;
-console.log("PORT :", PORT);
 
-app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_ORIGIN || '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 app.use(express.json());
 
-const jsonErrorHandler: ErrorRequestHandler = (err, _, res, next) => {
-    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-        return res.status(400).json({ msg: "Invalid JSON in request body" });
-    }
-    next();
-};
-
 app.use(jsonErrorHandler);
-app.get("/", (_, res) => {
-  res.send("API is working");
+app.get('/', (_, res) => {
+  res.send('API is working');
 });
 
-try {
-  app.use("/api/todos", todoRoutes);
-} catch (err) {
-  console.error("Failed to load todoRoutes:", err);
-}
+app.use('/api/todos', todoRoutes);
+
+app.use((err: any, req: express.Request, res: express.Response) => {
+  logger.error({ err }, 'Global error :');
+  const status = err.status || 500;
+  res.status(status).json({
+    error: err.message || ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+  });
+});
+
+app.use(helmet());
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
+app.use(limiter);
 
 connectDB();
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-}).on("error", (err) => {
-  console.error("❌ Server failed to start:", err);
-});
+app
+  .listen(PORT, () => {
+    logger.info(`✅ Server running at http://localhost:${PORT}`);
+  })
+  .on('error', (err) => {
+    logger.error({ err }, '❌ Server failed to start');
+  });

@@ -1,8 +1,8 @@
-import { Document }  from "mongoose";
+import { Document } from 'mongoose';
 
 export interface ITodo extends Document {
-    title: String,
-    description?: String,
-    createdAt: Date,
-    updatedAt: Date,
+  title: String;
+  description?: String;
+  createdAt: Date;
+  updatedAt: Date;
 }
